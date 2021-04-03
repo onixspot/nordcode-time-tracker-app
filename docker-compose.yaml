@@ -1,6 +1,13 @@
-version: '3.7'
+version: '3'
 
 volumes:
+  app_src:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: .
+
   db_data:
 
 networks:
@@ -13,12 +20,12 @@ services:
     environment:
       - NGINX_PORT=80
     volumes:
-      - .:/app
+      - app_src:${DKR_APP_DIR}
       - ./docker/nginx:/etc/nginx/conf.d
     networks:
       - default
     ports:
-      - 8548:80
+      - ${DKR_HTTP_PORT}:80
     links:
       - app
 
@@ -26,15 +33,26 @@ services:
     build:
       context: docker/php
       args:
-        uid: 999
+        uid: ${DKR_USER_ID}
+        appDir: ${DKR_APP_DIR}
     volumes:
-      - .:/app
+      - app_src:${DKR_APP_DIR}
     networks:
       - default
     expose:
       - 9000
     links:
       - db
+
+  fe:
+    build:
+      context: docker/node
+      args:
+        appDir: ${DKR_APP_DIR}
+    volumes:
+      - app_src:${DKR_APP_DIR}
+    networks:
+      - default
 
   db:
     image: mysql

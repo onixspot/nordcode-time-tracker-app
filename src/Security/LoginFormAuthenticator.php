@@ -9,7 +9,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
-use Symfony\Component\Security\Core\Exception\AuthenticationException;
 use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationException;
 use Symfony\Component\Security\Core\Exception\InvalidCsrfTokenException;
 use Symfony\Component\Security\Core\Security;
@@ -99,17 +98,6 @@ class LoginFormAuthenticator extends AbstractFormLoginAuthenticator implements P
 
         return new RedirectResponse($this->urlGenerator->generate('task_index'));
     }
-
-    public function onAuthenticationFailure(Request $request, AuthenticationException $exception): RedirectResponse
-    {
-        return parent::onAuthenticationFailure($request, $exception);
-    }
-
-    public function start(Request $request, AuthenticationException $authException = null): RedirectResponse
-    {
-        return new RedirectResponse('/login');
-    }
-
 
     protected function getLoginUrl(): string
     {
