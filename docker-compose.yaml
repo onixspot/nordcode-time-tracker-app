@@ -1,4 +1,4 @@
-version: '3'
+version: '3.7'
 
 volumes:
   app_src:
@@ -6,13 +6,17 @@ volumes:
     driver_opts:
       type: none
       o: bind
-      device: .
+      device: /home/docker/nordcode/time-tracker-app
 
   db_data:
 
 networks:
   default:
     driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.31.0.0/16
 
 services:
   web:
@@ -25,7 +29,7 @@ services:
     networks:
       - default
     ports:
-      - ${DKR_HTTP_PORT}:80
+      - ${DKR_WEB_PORT}:80
     links:
       - app
 
@@ -44,11 +48,12 @@ services:
     links:
       - db
 
-  fe:
+  encore:
     build:
-      context: docker/node
+      context: docker/encore
       args:
         appDir: ${DKR_APP_DIR}
+    hostname: time-tracker-app.local
     volumes:
       - app_src:${DKR_APP_DIR}
     networks:
@@ -59,10 +64,11 @@ services:
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 123
+      MYSQL_ROOT_PASSWORD: ${DKR_DB_PASSWORD}
     volumes:
       - db_data:/var/lib/mysql
     networks:
-      - default
+      default:
+        ipv4_address: 172.31.0.42
     expose:
       - 3306

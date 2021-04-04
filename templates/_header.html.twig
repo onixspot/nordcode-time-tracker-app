@@ -1,0 +1,15 @@
+<header>
+    <nav class="navbar bg-dark text-white">
+        <h3 class="text-uppercase m-0">Time Tracker App</h3>
+        <div class="d-flex justify-content-end align-items-center">
+            {% if is_granted('IS_AUTHENTICATED_FULLY') %}
+                <a class="btn btn-outline-secondary text-white" href="{{ path('app_logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> </a>
+            {% else %}
+                <a class="btn btn-secondary text-white mr-2" href="{{ path('app_login') }}">Sign in</a>
+                <span>or</span>
+                <a class="btn btn-outline-secondary text-white ml-2" href="{{ path('app_register') }}">Register</a>
+            {% endif %}
+        </div>
+    </nav>
+</header>

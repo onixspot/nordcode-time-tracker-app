@@ -1,0 +1,32 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Generate tasks report{% endblock %}
+
+{% block body %}
+
+    <nav class="navbar navbar-light bg-light mb-3">
+        <a class="btn btn-link" href="{{ path('task_index') }}"> <i class="fas fa-chevron-left"></i> </a>
+        <h3 class="text-uppercase m-0">Generate tasks report</h3>
+        <div></div>
+    </nav>
+
+    {{ form_start(form) }}
+
+    <div class="form-row">
+        <div class="col-lg-6">
+            {{ form_row(form.date_start) }}
+        </div>
+        <div class="col-lg-6">
+            {{ form_row(form.date_end) }}
+        </div>
+    </div>
+
+    {{ form_row(form.format) }}
+
+    <button class="btn btn-warning" type="submit">
+        <i class="fas fa-file-export"></i> Generate
+    </button>
+
+    {{ form_end(form) }}
+
+{% endblock %}

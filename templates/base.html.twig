@@ -1,19 +1,28 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="UTF-8">
-        <title>{% block title %}Welcome!{% endblock %}</title>
-        {# Run `composer require symfony/webpack-encore-bundle`
+<html lang="en">
+<head>
+    <meta name="viewport" content="width=device-width">
+    <meta charset="UTF-8">
+    <title>{% block title %}Welcome!{% endblock %}</title>
+    {# Run `composer require symfony/webpack-encore-bundle`
            and uncomment the following Encore helpers to start using Symfony UX #}
-        {% block stylesheets %}
-            {#{{ encore_entry_link_tags('app') }}#}
-        {% endblock %}
+    {% block stylesheets %}
+        {{ encore_entry_link_tags('fontawesome') }}
+        {{ encore_entry_link_tags('app') }}
+    {% endblock %}
 
-        {% block javascripts %}
-            {#{{ encore_entry_script_tags('app') }}#}
-        {% endblock %}
-    </head>
-    <body>
+    {% block javascripts %}
+        {{ encore_entry_script_tags('app') }}
+
+    {% endblock %}
+</head>
+<body>
+{% include "_header.html.twig" %}
+
+<section class="container mt-3">
+    <div>
         {% block body %}{% endblock %}
-    </body>
+    </div>
+</section>
+</body>
 </html>

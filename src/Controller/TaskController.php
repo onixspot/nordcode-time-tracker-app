@@ -3,9 +3,13 @@
 namespace App\Controller;
 
 use App\Entity\Task;
-use App\Form\TaskType;
+use App\Form\TaskReportFormType;
+use App\Form\TaskFormType;
+use App\Form\Type\TaskReportType;
 use App\Repository\TaskRepository;
+use App\Service\TaskService;
 use Knp\Component\Pager\PaginatorInterface;
+use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,28 +17,21 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * @Route("/task")
+ * @IsGranted("IS_AUTHENTICATED_FULLY")
  */
 class TaskController extends AbstractController
 {
-    public function __construct()
-    {
-    }
-
     /**
      * @Route("/", name="task_index", methods={"GET"})
      * @param TaskRepository $taskRepository
      * @param PaginatorInterface $paginator
+     * @param Request $request
      * @return Response
      */
     public function index(TaskRepository $taskRepository, PaginatorInterface $paginator, Request $request): Response
     {
-        $query = $taskRepository->createQueryBuilder('t')
-            ->where('t.user_id = :user_id')
-            ->setParameter('user_id', $this->getUser())
-            ->getQuery();
-
         $tasks = $paginator->paginate(
-            $query,
+            $taskRepository->getUserTasksQuery($this->getUser()),
             $request->query->getInt('page', 1),
             5
         );
@@ -55,8 +52,8 @@ class TaskController extends AbstractController
     public function new(Request $request): Response
     {
         $task = new Task();
-        $task->setUserId($this->getUser());
-        $form = $this->createForm(TaskType::class, $task);
+        $task->setUser($this->getUser());
+        $form = $this->createForm(TaskFormType::class, $task);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -77,7 +74,7 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", name="task_show", methods={"GET"})
+     * @Route("/{id}", name="task_show", methods={"GET"}, requirements={"id"="\d+"})
      * @param Task $task
      * @return Response
      */
@@ -92,14 +89,14 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/{id}/edit", name="task_edit", methods={"GET","POST"})
-     * @param Request $request
+     * @Route("/{id}/edit", name="task_edit", methods={"GET","POST"}, requirements={"id"="\d+"})
      * @param Task $task
+     * @param Request $request
      * @return Response
      */
-    public function edit(Request $request, Task $task): Response
+    public function edit(Task $task, Request $request): Response
     {
-        $form = $this->createForm(TaskType::class, $task);
+        $form = $this->createForm(TaskFormType::class, $task);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
@@ -118,12 +115,12 @@ class TaskController extends AbstractController
     }
 
     /**
-     * @Route("/{id}", name="task_delete", methods={"POST"})
-     * @param Request $request
+     * @Route("/{id}", name="task_delete", methods={"POST"}, requirements={"id"="\d+"})
      * @param Task $task
+     * @param Request $request
      * @return Response
      */
-    public function delete(Request $request, Task $task): Response
+    public function delete(Task $task, Request $request): Response
     {
         if ($this->isCsrfTokenValid('delete'.$task->getId(), $request->request->get('_token'))) {
             $entityManager = $this->getDoctrine()->getManager();
@@ -132,5 +129,38 @@ class TaskController extends AbstractController
         }
 
         return $this->redirectToRoute('task_index');
+    }
+
+    /**
+     * @Route("/export", name="task_export", methods={"GET", "POST"})
+     * @param Request $request
+     * @return Response
+     */
+    public function export(Request $request, TaskService $service): Response
+    {
+        $report = new TaskReportType();
+        $form = $this->createForm(TaskReportFormType::class, $report);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $data          = $form->getData();
+            dd($data);
+            // $reportContext = $service
+            //     ->generate($data['date_start'], $data['date_end'])
+            //     ->map(
+            //         function ($ctx) {
+            //             explode(',', $ctx['tasks']);
+            //         }
+            //     );
+
+            return $this->render('task/report.html.twig', ['tasks' => []]);
+        }
+
+        return $this->render(
+            'task/export.html.twig',
+            [
+                'form' => $form->createView(),
+            ]
+        );
     }
 }

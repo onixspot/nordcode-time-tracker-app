@@ -3,8 +3,14 @@
 namespace App\Repository;
 
 use App\Entity\Task;
+use App\Entity\User;
+use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @method Task|null find($id, $lockMode = null, $lockVersion = null)
@@ -19,32 +25,36 @@ class TaskRepository extends ServiceEntityRepository
         parent::__construct($registry, Task::class);
     }
 
-    // /**
-    //  * @return Task[] Returns an array of Task objects
-    //  */
-    /*
-    public function findByExampleField($value)
+    public function getUserTasksQuery(UserInterface $user): Query
     {
         return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->orderBy('t.id', 'ASC')
-            ->setMaxResults(10)
-            ->getQuery()
-            ->getResult()
-        ;
-    }
-    */
+            ->addCriteria($this->createUserOwnedCriteria($user))
+            ->getQuery();
 
-    /*
-    public function findOneBySomeField($value): ?Task
-    {
-        return $this->createQueryBuilder('t')
-            ->andWhere('t.exampleField = :val')
-            ->setParameter('val', $value)
-            ->getQuery()
-            ->getOneOrNullResult()
-        ;
+        // return $qb->('t')
+        //     ->where('t.user = :user')
+        //     ->setParameter('user', $user)
+        //     ->getQuery();
     }
-    */
+
+    public function createUserOwnedCriteria(UserInterface $user): Criteria
+    {
+        return Criteria::create()->andWhere(Criteria::expr()->eq('user', $user));
+    }
+
+    public function getTasks(UserInterface $user, DateTimeInterface $dateStart, DateTimeInterface $dateEnd): ArrayCollection
+    {
+        $query = $this->createQueryBuilder('t')
+            ->select('GROUP_CONCAT(DISTINCT t.id) AS tasks')
+            ->addSelect('SEC_TO_TIME(SUM(TIME_TO_SEC(t.timeSpent))) AS total_spent_time')
+            ->where('t.user = :user')
+            ->andWhere('t.date BETWEEN :date_start AND :date_end')
+            ->groupBy('t.user')
+            ->setParameter('user', $user)
+            ->setParameter('date_start', $dateStart)
+            ->setParameter('date_end', $dateEnd)
+            ->getQuery();
+
+        return new ArrayCollection($query->getArrayResult());
+    }
 }

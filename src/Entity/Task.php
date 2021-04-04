@@ -3,7 +3,9 @@
 namespace App\Entity;
 
 use App\Repository\TaskRepository;
+use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=TaskRepository::class)
@@ -15,33 +17,33 @@ class Task
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private int $id;
 
     /**
      * @ORM\Column(type="string", length=255)
      */
-    private $title;
+    private string $title;
 
     /**
      * @ORM\Column(type="text", nullable=true)
      */
-    private $comment;
+    private ?string $comment;
 
     /**
      * @ORM\Column(type="date")
      */
-    private $date;
+    private DateTimeInterface $date;
 
     /**
-     * @ORM\Column(type="time")
+     * @ORM\Column(type="time", name="time_spent")
      */
-    private $time_spent;
+    private DateTimeInterface $timeSpent;
 
     /**
      * @ORM\ManyToOne(targetEntity=User::class, inversedBy="tasks")
      * @ORM\JoinColumn(nullable=false)
      */
-    private $user_id;
+    private ?UserInterface $user;
 
     public function getId(): ?int
     {
@@ -72,38 +74,38 @@ class Task
         return $this;
     }
 
-    public function getDate(): ?\DateTimeInterface
+    public function getDate(): DateTimeInterface
     {
         return $this->date;
     }
 
-    public function setDate(\DateTimeInterface $date): self
+    public function setDate(DateTimeInterface $date): self
     {
         $this->date = $date;
 
         return $this;
     }
 
-    public function getTimeSpent(): ?\DateTimeInterface
+    public function getTimeSpent(): DateTimeInterface
     {
-        return $this->time_spent;
+        return $this->timeSpent;
     }
 
-    public function setTimeSpent(\DateTimeInterface $time_spent): self
+    public function setTimeSpent(DateTimeInterface $timeSpent): self
     {
-        $this->time_spent = $time_spent;
+        $this->timeSpent = $timeSpent;
 
         return $this;
     }
 
-    public function getUserId(): ?User
+    public function getUser(): ?UserInterface
     {
-        return $this->user_id;
+        return $this->user;
     }
 
-    public function setUserId(?User $user_id): self
+    public function setUser(UserInterface $user): self
     {
-        $this->user_id = $user_id;
+        $this->user = $user;
 
         return $this;
     }

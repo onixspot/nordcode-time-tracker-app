@@ -1,4 +1,8 @@
 {{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
+<nav class="navbar navbar-light bg-light mb-3">
+    <a class="btn btn-link" href="{{ path('task_index') }}"> <i class="fas fa-chevron-left"></i> </a>
+    <h4 class="text-uppercase m-0">{{ header_title|default('Create New Task') }}</h4>
+    <button class="btn btn-success" type="submit"><i class="fas fa-save"></i></button>
+</nav>
+{{ form_widget(form) }}
 {{ form_end(form) }}

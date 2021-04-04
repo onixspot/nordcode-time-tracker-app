@@ -1,0 +1,22 @@
+<table>
+    <thead>
+    <tr>
+        <th>Id</th>
+        <th>Title</th>
+        <th>Comment</th>
+        <th>Date</th>
+        <th>Time Spent</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.title }}</td>
+            <td>{{ task.comment }}</td>
+            <td>{{ task.date|date('d.m.Y') }}</td>
+            <td>{{ task.timeSpent|date('H:i') }}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>

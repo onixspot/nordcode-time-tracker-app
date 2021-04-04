@@ -20,28 +20,28 @@ class User implements UserInterface
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
      */
-    private $id;
+    private ?int $id;
 
     /**
      * @ORM\Column(type="string", length=180, unique=true)
      */
-    private $email;
+    private string $email;
 
     /**
      * @ORM\Column(type="json")
      */
-    private $roles = [];
+    private array $roles = [];
 
     /**
      * @var string The hashed password
      * @ORM\Column(type="string")
      */
-    private $password;
+    private string $password;
 
     /**
-     * @ORM\OneToMany(targetEntity=Task::class, mappedBy="user_id")
+     * @ORM\OneToMany(targetEntity=Task::class, mappedBy="user")
      */
-    private $tasks;
+    private Collection $tasks;
 
     public function __construct()
     {
@@ -80,7 +80,7 @@ class User implements UserInterface
      */
     public function getRoles(): array
     {
-        $roles = $this->roles;
+        $roles   = $this->roles;
         $roles[] = 'ROLE_USER';
 
         return array_unique($roles);
@@ -140,7 +140,7 @@ class User implements UserInterface
     {
         if (!$this->tasks->contains($task)) {
             $this->tasks[] = $task;
-            $task->setUserId($this);
+            $task->setUser($this);
         }
 
         return $this;
@@ -148,11 +148,8 @@ class User implements UserInterface
 
     public function removeTask(Task $task): self
     {
-        if ($this->tasks->removeElement($task)) {
-            // set the owning side to null (unless already changed)
-            if ($task->getUserId() === $this) {
-                $task->setUserId(null);
-            }
+        if ($this->tasks->removeElement($task) && $task->getUser() === $this) {
+            $task->setUser(null);
         }
 
         return $this;

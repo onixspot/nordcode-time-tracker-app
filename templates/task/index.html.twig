@@ -3,30 +3,42 @@
 {% block title %}Task index{% endblock %}
 
 {% block body %}
-    <h1>Task index</h1>
 
-    <table class="table">
+    <nav class="navbar navbar-light bg-light mb-3">
+        <h3 class="text-uppercase m-0">Tasks</h3>
+        <div class="d-flex justify-content-end">
+            <a class="btn btn-success mr-1" href="{{ path('task_new') }}" title="Create"> <i class="fas fa-plus"></i>
+            </a> <a class="btn btn-warning" href="{{ path('task_export') }}" title="Export">
+                <i class="fas fa-file-export"></i> </a>
+        </div>
+    </nav>
+
+    <table class="table table-striped">
         <thead>
-            <tr>
-                <th>Id</th>
-                <th>Title</th>
-                <th>Comment</th>
-                <th>Date</th>
-                <th>Time_spent</th>
-                <th>actions</th>
-            </tr>
+        <tr>
+            <th>Id</th>
+            <th>Title</th>
+            <th>Comment</th>
+            <th>Date / Time Spent</th>
+            <th></th>
+        </tr>
         </thead>
         <tbody>
         {% for task in tasks %}
             <tr>
-                <td>{{ task.id }}</td>
-                <td>{{ task.title }}</td>
-                <td>{{ task.comment }}</td>
-                <td>{{ task.date ? task.date|date('Y-m-d') : '' }}</td>
-                <td>{{ task.timeSpent ? task.timeSpent|date('H:i:s') : '' }}</td>
-                <td>
-                    <a href="{{ path('task_show', {'id': task.id}) }}">show</a>
-                    <a href="{{ path('task_edit', {'id': task.id}) }}">edit</a>
+                <td class="align-middle">{{ task.id }}</td>
+                <td class="align-middle">
+                    <a href="{{ path('task_show', {'id': task.id}) }}" class="btn-link">{{ task.title }}</a></td>
+                <td class="align-middle">{{ task.comment }}</td>
+                <td class="align-middle">
+                    {{ task.date ? task.date|date('d.m.Y') : '' }} / {{ task.timeSpent ? task.timeSpent|date('H:i') : '' }}
+                </td>
+                <td class="align-middle">
+                    <div class="d-flex justify-content-end">
+                        <a class="btn btn-secondary mr-1" href="{{ path('task_edit', {'id': task.id}) }}">
+                            <i class="fas fa-pen"></i> </a>
+                        {{ include('task/_delete_form.html.twig') }}
+                    </div>
                 </td>
             </tr>
         {% else %}
@@ -40,6 +52,4 @@
     <div class="navigation">
         {{ knp_pagination_render(tasks) }}
     </div>
-
-    <a href="{{ path('task_new') }}">Create new</a>
 {% endblock %}
