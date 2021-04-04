@@ -7,6 +7,7 @@ use App\Form\TaskReportFormType;
 use App\Form\TaskFormType;
 use App\Form\Type\TaskReportType;
 use App\Repository\TaskRepository;
+use App\Response\CsvResponse;
 use App\Service\TaskService;
 use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
@@ -144,7 +145,8 @@ class TaskController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data          = $form->getData();
-            dd($data);
+            // dd($data);
+            return CsvResponse::create([]);
             // $reportContext = $service
             //     ->generate($data['date_start'], $data['date_end'])
             //     ->map(
