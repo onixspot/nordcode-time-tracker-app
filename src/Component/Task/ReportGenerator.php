@@ -1,14 +1,16 @@
 <?php
 
-namespace App\Service;
+namespace App\Component\Task;
 
 use App\Repository\TaskRepository;
 use DateTimeInterface;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\SerializerInterface;
+use function dd;
 
-class TaskService
+class ReportGenerator implements ReportGeneratorInterface
 {
     private TaskRepository $repository;
 
@@ -23,9 +25,12 @@ class TaskService
         $this->serializer = $serializer;
     }
 
-    public function generate(DateTimeInterface $dateStart, DateTimeInterface $dateEnd)
+    public function generate(DateTimeInterface $dateStart, DateTimeInterface $dateEnd): ArrayCollection
     {
-        return $this->repository->getTasks($this->getUser(), $dateStart, $dateEnd);
+        $report = new ReportContext();
+        $tasks  = $this->repository->getTasks($this->getUser(), $dateStart, $dateEnd);
+        dd($tasks);
+        // return ;
     }
 
     private function getUser(): ?UserInterface

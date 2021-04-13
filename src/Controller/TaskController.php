@@ -2,13 +2,13 @@
 
 namespace App\Controller;
 
+use App\Component\Task\ReportContext;
+use App\Component\Task\ReportGenerator;
 use App\Entity\Task;
-use App\Form\TaskReportFormType;
 use App\Form\TaskFormType;
-use App\Form\Type\TaskReportType;
+use App\Form\TaskReportFormType;
 use App\Repository\TaskRepository;
 use App\Response\CsvResponse;
-use App\Service\TaskService;
 use Knp\Component\Pager\PaginatorInterface;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -137,16 +137,16 @@ class TaskController extends AbstractController
      * @param Request $request
      * @return Response
      */
-    public function export(Request $request, TaskService $service): Response
+    public function export(Request $request, ReportGenerator $service): Response
     {
-        $report = new TaskReportType();
+        $report = new ReportContext();
         $form = $this->createForm(TaskReportFormType::class, $report);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
             $data          = $form->getData();
             // dd($data);
-            return CsvResponse::create([]);
+            return new CsvResponse([['Id', 'Title', 'Comment', 'Date', 'Time Spent'], ['B1', 'B2'], ['C1', 'C3']]);
             // $reportContext = $service
             //     ->generate($data['date_start'], $data['date_end'])
             //     ->map(
@@ -155,7 +155,7 @@ class TaskController extends AbstractController
             //         }
             //     );
 
-            return $this->render('task/report.html.twig', ['tasks' => []]);
+            // return $this->render('task/report.html.twig', ['tasks' => []]);
         }
 
         return $this->render(

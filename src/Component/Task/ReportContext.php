@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Form\Type;
+namespace App\Component\Task;
 
 use App\Entity\User;
 use DateTimeInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 
-class TaskReportType
+class ReportContext
 {
     public const PDF_FORMAT   = 'PDF';
     public const CSV_FORMAT   = 'CSV';
@@ -34,7 +34,7 @@ class TaskReportType
         return $this->dateStart;
     }
 
-    public function setDateStart(DateTimeInterface $dateStart): TaskReportType
+    public function setDateStart(DateTimeInterface $dateStart): ReportContext
     {
         $this->dateStart = $dateStart;
 
@@ -46,7 +46,7 @@ class TaskReportType
         return $this->dateEnd;
     }
 
-    public function setDateEnd(DateTimeInterface $dateEnd): TaskReportType
+    public function setDateEnd(DateTimeInterface $dateEnd): ReportContext
     {
         $this->dateEnd = $dateEnd;
 
@@ -58,7 +58,7 @@ class TaskReportType
         return $this->user;
     }
 
-    public function setUser(User $user): TaskReportType
+    public function setUser(User $user): ReportContext
     {
         $this->user = $user;
 
@@ -70,7 +70,7 @@ class TaskReportType
         return $this->tasks;
     }
 
-    public function setTasks(ArrayCollection $tasks): TaskReportType
+    public function setTasks(ArrayCollection $tasks): ReportContext
     {
         $this->tasks = $tasks;
 
@@ -82,7 +82,7 @@ class TaskReportType
         return $this->totalTimeSpent;
     }
 
-    public function setTotalTimeSpent(DateTimeInterface $totalTimeSpent): TaskReportType
+    public function setTotalTimeSpent(DateTimeInterface $totalTimeSpent): ReportContext
     {
         $this->totalTimeSpent = $totalTimeSpent;
 
@@ -94,7 +94,7 @@ class TaskReportType
         return $this->format;
     }
 
-    public function setFormat(string $format): TaskReportType
+    public function setFormat(string $format): ReportContext
     {
         $this->format = $format;
 

@@ -2,8 +2,8 @@
 
 namespace App\Form;
 
-use App\Form\Type\TaskReportType;
-use App\Service\TaskService;
+use App\Component\Task\ReportContext;
+use App\Component\Task\ReportGenerator;
 use DateInterval;
 use DateTimeImmutable;
 use Symfony\Component\Form\AbstractType;
@@ -16,9 +16,9 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class TaskReportFormType extends AbstractType implements DataMapperInterface, DataTransformerInterface
 {
-    private TaskService $taskService;
+    private ReportGenerator $taskService;
 
-    public function __construct(TaskService $taskService)
+    public function __construct(ReportGenerator $taskService)
     {
         $this->taskService = $taskService;
     }
@@ -55,7 +55,7 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
                 'format',
                 ChoiceType::class,
                 [
-                    'choices'     => TaskReportType::FORMATS,
+                    'choices'     => ReportContext::FORMATS,
                     'label'       => 'Format',
                     'placeholder' => 'Chose document format',
                 ]
@@ -70,7 +70,7 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
     {
         $resolver->setDefaults(
             [
-                'data_class' => TaskReportType::class,
+                'data_class' => ReportContext::class,
                 'required'   => true,
             ]
         );
@@ -83,7 +83,10 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
     public function mapFormsToData($forms, &$viewData)
     {
         $forms    = iterator_to_array($forms);
-        $viewData = (new TaskReportType())
+
+        $this->taskService->generate($forms['date_start']->getData(), $forms['date_end']->getData());
+
+        $viewData = (new ReportContext())
             ->setFormat($forms['format']->getData())
             ->setDateStart($forms['date_start']->getData())
             ->setDateEnd($forms['date_end']->getData());

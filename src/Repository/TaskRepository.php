@@ -8,6 +8,7 @@ use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
+use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query;
 use Doctrine\Persistence\ManagerRegistry;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -55,6 +56,6 @@ class TaskRepository extends ServiceEntityRepository
             ->setParameter('date_end', $dateEnd)
             ->getQuery();
 
-        return new ArrayCollection($query->getArrayResult());
+        return new ArrayCollection($query->getResult(AbstractQuery::HYDRATE_OBJECT));
     }
 }
