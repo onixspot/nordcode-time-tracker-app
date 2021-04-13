@@ -2,15 +2,14 @@
 
 namespace App\Controller;
 
-use App\Component\Task\ReportContext;
-use App\Component\Task\ReportGenerator;
+use App\Component\Task\Context\ReportContext;
+use App\Component\Task\Response\CsvResponse;
 use App\Entity\Task;
 use App\Form\TaskFormType;
 use App\Form\TaskReportFormType;
 use App\Repository\TaskRepository;
-use App\Response\CsvResponse;
+use Doctrine\ORM\Query\QueryException;
 use Knp\Component\Pager\PaginatorInterface;
-use Sensio\Bundle\FrameworkExtraBundle\Configuration\IsGranted;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -18,21 +17,19 @@ use Symfony\Component\Routing\Annotation\Route;
 
 /**
  * @Route("/task")
- * @IsGranted("IS_AUTHENTICATED_FULLY")
  */
 class TaskController extends AbstractController
 {
     /**
      * @Route("/", name="task_index", methods={"GET"})
-     * @param TaskRepository $taskRepository
-     * @param PaginatorInterface $paginator
-     * @param Request $request
-     * @return Response
+     * @throws QueryException
      */
     public function index(TaskRepository $taskRepository, PaginatorInterface $paginator, Request $request): Response
     {
         $tasks = $paginator->paginate(
-            $taskRepository->getUserTasksQuery($this->getUser()),
+            $taskRepository
+                ->createQueryBuilder()
+                ->getQuery(),
             $request->query->getInt('page', 1),
             5
         );
@@ -47,8 +44,6 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/new", name="task_new", methods={"GET","POST"})
-     * @param Request $request
-     * @return Response
      */
     public function new(Request $request): Response
     {
@@ -76,8 +71,6 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/{id}", name="task_show", methods={"GET"}, requirements={"id"="\d+"})
-     * @param Task $task
-     * @return Response
      */
     public function show(Task $task): Response
     {
@@ -91,9 +84,6 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/{id}/edit", name="task_edit", methods={"GET","POST"}, requirements={"id"="\d+"})
-     * @param Task $task
-     * @param Request $request
-     * @return Response
      */
     public function edit(Task $task, Request $request): Response
     {
@@ -117,9 +107,6 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/{id}", name="task_delete", methods={"POST"}, requirements={"id"="\d+"})
-     * @param Task $task
-     * @param Request $request
-     * @return Response
      */
     public function delete(Task $task, Request $request): Response
     {
@@ -134,28 +121,43 @@ class TaskController extends AbstractController
 
     /**
      * @Route("/export", name="task_export", methods={"GET", "POST"})
-     * @param Request $request
-     * @return Response
+     * @return Response|CsvResponse
      */
-    public function export(Request $request, ReportGenerator $service): Response
+    public function export(Request $request)
     {
-        $report = new ReportContext();
-        $form = $this->createForm(TaskReportFormType::class, $report);
+        $reportContext = new ReportContext();
+        $form          = $this->createForm(TaskReportFormType::class, $reportContext);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $data          = $form->getData();
-            // dd($data);
-            return new CsvResponse([['Id', 'Title', 'Comment', 'Date', 'Time Spent'], ['B1', 'B2'], ['C1', 'C3']]);
-            // $reportContext = $service
-            //     ->generate($data['date_start'], $data['date_end'])
-            //     ->map(
-            //         function ($ctx) {
-            //             explode(',', $ctx['tasks']);
-            //         }
-            //     );
+            /** @var ReportContext $context */
+            $context = $form->getData();
 
-            // return $this->render('task/report.html.twig', ['tasks' => []]);
+            return new CsvResponse($context);
+
+            // return new CsvResponse(
+            //     array_merge(
+            //         [
+            //             ['Id', 'Title', 'Comment', 'Date'], // , 'Time Spent'
+            //         ],
+            //         $context
+            //             ->getTasks()
+            //             ->map(
+            //                 static function (Task $task) {
+            //                     return [
+            //                         $task->getId(),
+            //                         $task->getTitle() ?? '',
+            //                         $task->getComment() ?? '',
+            //                         $task->getDate()->format('d.m.Y'),
+            //                     ];
+            //                 }
+            //             )
+            //             ->toArray(),
+            //         [
+            //             ['', '', 'Total', $context->getTotalTimeSpent()],
+            //         ]
+            //     )
+            // );
         }
 
         return $this->render(

@@ -24,10 +24,11 @@ RUN chmod +x /usr/bin/install-php-extensions \
   && install-php-extensions \
         apcu \
         bz2 \
+        gd \
         intl \
+        mysqli \
         opcache \
         pdo_mysql \
-        mysqli \
         xdebug \
         zip
 

@@ -16,7 +16,7 @@ use Symfony\Component\Security\Core\Security;
 
 class UserTaskSubscriber implements EventSubscriberInterface
 {
-    const ROUTES = [
+    public const ROUTES = [
         'show',
         'edit',
         'delete',

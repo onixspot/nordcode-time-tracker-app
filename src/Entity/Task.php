@@ -5,12 +5,13 @@ namespace App\Entity;
 use App\Repository\TaskRepository;
 use DateTimeInterface;
 use Doctrine\ORM\Mapping as ORM;
+use JsonSerializable;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
  * @ORM\Entity(repositoryClass=TaskRepository::class)
  */
-class Task
+class Task implements JsonSerializable
 {
     /**
      * @ORM\Id
@@ -44,6 +45,36 @@ class Task
      * @ORM\JoinColumn(nullable=false)
      */
     private ?UserInterface $user;
+
+    public function __construct(int $id = null)
+    {
+        if (null !== $id) {
+            $this->id = $id;
+        }
+    }
+
+    public function getUser(): ?UserInterface
+    {
+        return $this->user;
+    }
+
+    public function setUser(UserInterface $user): self
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function jsonSerialize(): array
+    {
+        return [
+            'id'      => $this->getId(),
+            'title'   => $this->getTitle(),
+            'comment' => $this->getComment(),
+            'date'    => $this->getDate()->format('d.m.Y'),
+            // 'timeSpent' => $this->getTimeSpent()->format('H:i:s'),
+        ];
+    }
 
     public function getId(): ?int
     {
@@ -94,18 +125,6 @@ class Task
     public function setTimeSpent(DateTimeInterface $timeSpent): self
     {
         $this->timeSpent = $timeSpent;
-
-        return $this;
-    }
-
-    public function getUser(): ?UserInterface
-    {
-        return $this->user;
-    }
-
-    public function setUser(UserInterface $user): self
-    {
-        $this->user = $user;
 
         return $this;
     }

@@ -2,15 +2,19 @@
 
 namespace App\Repository;
 
+use App\Component\Task\Criteria\TaskCriteria;
 use App\Entity\Task;
-use App\Entity\User;
 use DateTimeInterface;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Criteria;
 use Doctrine\ORM\AbstractQuery;
 use Doctrine\ORM\Query;
+use Doctrine\ORM\Query\QueryException;
+use Doctrine\ORM\QueryBuilder;
 use Doctrine\Persistence\ManagerRegistry;
+use DoctrineExtensions\Query\MysqlWalker;
+use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -21,31 +25,31 @@ use Symfony\Component\Security\Core\User\UserInterface;
  */
 class TaskRepository extends ServiceEntityRepository
 {
-    public function __construct(ManagerRegistry $registry)
+    private TaskCriteria $criteria;
+
+    private Security $security;
+
+    public function __construct(ManagerRegistry $registry, Security $security)
     {
         parent::__construct($registry, Task::class);
+        $this->security = $security;
+        $this->criteria = TaskCriteria::create()->withUser($this->getUser());
     }
 
-    public function getUserTasksQuery(UserInterface $user): Query
+    private function getUser(): ?UserInterface
     {
-        return $this->createQueryBuilder('t')
-            ->addCriteria($this->createUserOwnedCriteria($user))
-            ->getQuery();
-
-        // return $qb->('t')
-        //     ->where('t.user = :user')
-        //     ->setParameter('user', $user)
-        //     ->getQuery();
+        return $this->security->getUser();
     }
 
-    public function createUserOwnedCriteria(UserInterface $user): Criteria
-    {
-        return Criteria::create()->andWhere(Criteria::expr()->eq('user', $user));
-    }
-
-    public function getTasks(UserInterface $user, DateTimeInterface $dateStart, DateTimeInterface $dateEnd): ArrayCollection
-    {
-        $query = $this->createQueryBuilder('t')
+    /**
+     * @throws QueryException
+     */
+    public function getTasks(
+        UserInterface $user,
+        DateTimeInterface $dateStart,
+        DateTimeInterface $dateEnd
+    ): ArrayCollection {
+        $query = $this->createQueryBuilder()
             ->select('GROUP_CONCAT(DISTINCT t.id) AS tasks')
             ->addSelect('SEC_TO_TIME(SUM(TIME_TO_SEC(t.timeSpent))) AS total_spent_time')
             ->where('t.user = :user')
@@ -57,5 +61,47 @@ class TaskRepository extends ServiceEntityRepository
             ->getQuery();
 
         return new ArrayCollection($query->getResult(AbstractQuery::HYDRATE_OBJECT));
+    }
+
+    /**
+     * @throws QueryException
+     */
+    public function createQueryBuilder($alias = 't', $indexBy = null): QueryBuilder
+    {
+        return parent::createQueryBuilder($alias, $indexBy)
+            ->addCriteria($this->getCriteria());
+    }
+
+    /**
+     * @return TaskCriteria|Criteria
+     */
+    public function getCriteria(): Criteria
+    {
+        return $this->criteria;
+    }
+
+    /**
+     * @throws QueryException
+     */
+    public function findInDateRange(DateTimeInterface $dateStart, DateTimeInterface $dateEnd)
+    {
+        $builder = $this->createQueryBuilder();
+        $query   = $builder
+            ->select('t.id')
+            ->addSelect('SUM(t.timeSpent) as timeSpent')
+            ->addSelect('ANY_VALUE(t.title) as title')
+            ->addSelect('ANY_VALUE(t.comment) as comment')
+            ->addSelect('ANY_VALUE(t.date) as date')
+            ->andWhere($builder->expr()->between('t.date', ':date_start', ':date_end'))
+            ->groupBy('t.id')
+            ->setParameter('date_start', $dateStart)
+            ->setParameter('date_end', $dateEnd)
+            ->getQuery();
+
+        $query
+            ->setHint(Query::HINT_CUSTOM_OUTPUT_WALKER, MysqlWalker::class)
+            ->setHint('mysqlWalker.withRollup', true);
+
+        return $query->getArrayResult();
     }
 }

@@ -10,19 +10,20 @@
         {{ encore_entry_link_tags('fontawesome') }}
         {{ encore_entry_link_tags('app') }}
     {% endblock %}
-
-    {% block javascripts %}
-        {{ encore_entry_script_tags('app') }}
-
-    {% endblock %}
 </head>
 <body>
 {% include "_header.html.twig" %}
+
+<div data-controller="hello"></div>
 
 <section class="container mt-3">
     <div>
         {% block body %}{% endblock %}
     </div>
 </section>
+
+{% block javascripts %}
+    {{ encore_entry_script_tags('app') }}
+{% endblock %}
 </body>
 </html>

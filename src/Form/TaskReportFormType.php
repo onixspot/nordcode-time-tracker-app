@@ -2,10 +2,14 @@
 
 namespace App\Form;
 
-use App\Component\Task\ReportContext;
-use App\Component\Task\ReportGenerator;
+use App\Component\Task\Context\ReportContext;
+use App\Entity\Task;
+use App\Repository\TaskRepository;
 use DateInterval;
+use DateTime;
 use DateTimeImmutable;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\ORM\Query\QueryException;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\DataMapperInterface;
 use Symfony\Component\Form\DataTransformerInterface;
@@ -16,18 +20,20 @@ use Symfony\Component\OptionsResolver\OptionsResolver;
 
 class TaskReportFormType extends AbstractType implements DataMapperInterface, DataTransformerInterface
 {
-    private ReportGenerator $taskService;
+    private TaskRepository $taskRepository;
 
-    public function __construct(ReportGenerator $taskService)
+    private ReportContext $context;
+
+    public function __construct(TaskRepository $taskRepository)
     {
-        $this->taskService = $taskService;
+        $this->taskRepository = $taskRepository;
     }
 
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
+        $yearsRange = range(2000, date('Y'));
         $dateEnd    = new DateTimeImmutable();
         $dateStart  = $dateEnd->sub(new DateInterval('P1D'));
-        $yearsRange = range(2000, date('Y'));
 
         $builder
             ->add(
@@ -36,7 +42,7 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
                 [
                     'widget'   => 'single_text',
                     'years'    => $yearsRange,
-                    'data'     => $dateEnd,
+                    'data'     => $dateStart,
                     'required' => true,
                     'label'    => 'From',
                 ]
@@ -47,7 +53,7 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
                 [
                     'widget' => 'single_text',
                     'years'  => $yearsRange,
-                    'data'   => $dateStart,
+                    'data'   => $dateEnd,
                     'label'  => 'To',
                 ]
             )
@@ -61,8 +67,7 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
                 ]
             );
 
-        $builder
-            ->setDataMapper($this);
+        $builder->setDataMapper($this->setContext($options['data']));
         // ->addModelTransformer($this);
     }
 
@@ -80,27 +85,84 @@ class TaskReportFormType extends AbstractType implements DataMapperInterface, Da
     {
     }
 
-    public function mapFormsToData($forms, &$viewData)
+    /**
+     * @throws QueryException
+     */
+    public function mapFormsToData($forms, &$viewData): void
     {
-        $forms    = iterator_to_array($forms);
+        $forms = iterator_to_array($forms);
 
-        $this->taskService->generate($forms['date_start']->getData(), $forms['date_end']->getData());
-
-        $viewData = (new ReportContext())
+        $ctx = $this->getContext()
             ->setFormat($forms['format']->getData())
             ->setDateStart($forms['date_start']->getData())
             ->setDateEnd($forms['date_end']->getData());
+
+        $tasks = $this->getTasks();
+        $ctx
+            ->setTotalTimeSpent($this->getTotalTimeSpent($tasks))
+            ->setTasks(
+                new ArrayCollection(
+                    array_map(
+                        static function ($task) {
+                            return (new Task((int)$task['id']))
+                                ->setTitle((string)$task['title'])
+                                ->setComment((string)$task['comment'])
+                                ->setDate(new DateTime($task['date']));
+                            // ->setTimeSpent($task['timeSpent']);
+                        },
+                        $tasks
+                    )
+                )
+            );
+
+        $viewData = $ctx;
+    }
+
+    /**
+     * @return ReportContext
+     */
+    public function getContext(): ReportContext
+    {
+        return $this->context;
+    }
+
+    /**
+     * @param ReportContext $context
+     * @return TaskReportFormType
+     */
+    public function setContext(ReportContext $context): TaskReportFormType
+    {
+        $this->context = $context;
+
+        return $this;
+    }
+
+    /**
+     * @throws QueryException
+     */
+    private function getTasks()
+    {
+        $ctx = $this->getContext();
+
+        return $this->taskRepository->findInDateRange($ctx->getDateStart(), $ctx->getDateEnd());
+    }
+
+    private function getTotalTimeSpent(array &$tasks): int
+    {
+        ['timeSpent' => $timeSpent] = array_splice($tasks, -1, 1)[0];
+
+        if (!$timeSpent) {
+            return 0;
+        }
+
+        return (int)$timeSpent;
     }
 
     public function transform($value)
     {
-
     }
 
     public function reverseTransform($value)
     {
-
-        // $this->taskService->generate()
-        // dd($value);
     }
 }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Component\Task;
+namespace App\Component\Task\Context;
 
 use App\Entity\User;
 use DateTimeInterface;
@@ -21,7 +21,7 @@ class ReportContext
     private ArrayCollection $tasks;
     private ?DateTimeInterface $dateStart;
     private ?DateTimeInterface $dateEnd;
-    private ?DateTimeInterface $totalTimeSpent;
+    private int $totalTimeSpent = 0;
     private string $format;
 
     public function __construct()
@@ -77,12 +77,12 @@ class ReportContext
         return $this;
     }
 
-    public function getTotalTimeSpent(): ?DateTimeInterface
+    public function getTotalTimeSpent(): int
     {
         return $this->totalTimeSpent;
     }
 
-    public function setTotalTimeSpent(DateTimeInterface $totalTimeSpent): ReportContext
+    public function setTotalTimeSpent(int $totalTimeSpent): ReportContext
     {
         $this->totalTimeSpent = $totalTimeSpent;
 
